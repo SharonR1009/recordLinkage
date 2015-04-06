@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <left-data-source class="cdc.impl.datasource.text.CSVDataSource" name="sourceA">
+        <params>
+            <param name="column-separator" value=","/>
+            <param name="source-name" value="sourceA"/>
+            <param name="input-file" value="/Users/sharon/Desktop/d1.csv"/>
+        </params>
+        <row-model>
+            <column column="0"
+                converter="cdc.datamodel.converters.DummyConverter" name="0">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="name"
+                converter="cdc.datamodel.converters.DummyConverter" name="name">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="addr"
+                converter="cdc.datamodel.converters.DummyConverter" name="addr">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="phone"
+                converter="cdc.datamodel.converters.DummyConverter" name="phone">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="country"
+                converter="cdc.datamodel.converters.DummyConverter" name="country">
+                <empty-values/>
+                <params/>
+            </column>
+        </row-model>
+    </left-data-source>
+    <right-data-source class="cdc.impl.datasource.text.CSVDataSource" name="sourceB">
+        <params>
+            <param name="column-separator" value=","/>
+            <param name="source-name" value="sourceB"/>
+            <param name="input-file" value="/Users/sharon/Desktop/d2.csv"/>
+        </params>
+        <row-model>
+            <column column="0"
+                converter="cdc.datamodel.converters.DummyConverter" name="0">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="name"
+                converter="cdc.datamodel.converters.DummyConverter" name="name">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="addr"
+                converter="cdc.datamodel.converters.DummyConverter" name="addr">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="phone"
+                converter="cdc.datamodel.converters.DummyConverter" name="phone">
+                <empty-values/>
+                <params/>
+            </column>
+            <column column="country"
+                converter="cdc.datamodel.converters.DummyConverter" name="country">
+                <empty-values/>
+                <params/>
+            </column>
+        </row-model>
+    </right-data-source>
+    <join class="cdc.impl.join.svm.SVMJoin" summary-left="false" summary-right="false">
+        <params>
+            <param name="blocking-function" value="soundex(5)"/>
+            <param name="non-matching-margin" value="0.3"/>
+            <param name="training-selection-method" value="nearest"/>
+            <param name="wm" value="200"/>
+            <param name="wn" value="1000"/>
+            <param name="ym-incremental" value="200"/>
+            <param name="learning-rounds-number" value="9"/>
+            <param name="matching-margin" value="0.95"/>
+            <param name="blocking-param" value="1"/>
+            <param name="yn-incremental" value="400"/>
+        </params>
+        <join-condition class="cdc.impl.conditions.WeightedJoinCondition">
+            <params>
+                <param name="acceptance-level" value="100"/>
+            </params>
+            <condition class="cdc.impl.distance.AddressDistance"
+                left-column="addr" right-column="addr" weight="5">
+                <params>
+                    <param name="resolve-secondary-location" value="true"/>
+                    <param name="math-level-end" value="0.4"/>
+                    <param name="match-level-start" value="0.2"/>
+                </params>
+            </condition>
+            <condition class="cdc.impl.distance.QGramDistance"
+                left-column="name" right-column="name" weight="5">
+                <params>
+                    <param name="q" value="2"/>
+                    <param name="disapprove-level" value="1.0"/>
+                    <param name="approve-level" value="0.9"/>
+                </params>
+            </condition>
+            <condition class="cdc.impl.distance.EditDistance"
+                left-column="phone" right-column="phone" weight="90">
+                <params>
+                    <param name="math-level-end" value="0.4"/>
+                    <param name="match-level-start" value="0.2"/>
+                </params>
+            </condition>
+            <condition class="cdc.impl.distance.EditDistance"
+                left-column="country" right-column="country" weight="0">
+                <params>
+                    <param name="math-level-end" value="0.5"/>
+                    <param name="match-level-start" value="0.25"/>
+                </params>
+            </condition>
+        </join-condition>
+        <row-model>
+            <column name="0" source="sourceA"/>
+            <column name="name" source="sourceA"/>
+            <column name="addr" source="sourceA"/>
+            <column name="phone" source="sourceA"/>
+            <column name="country" source="sourceA"/>
+            <column name="0" source="sourceB"/>
+            <column name="name" source="sourceB"/>
+            <column name="addr" source="sourceB"/>
+            <column name="phone" source="sourceB"/>
+            <column name="country" source="sourceB"/>
+        </row-model>
+    </join>
+    <results-savers>
+        <results-saver class="cdc.impl.resultsavers.DeduplicatingResultsSaver">
+            <params>
+                <param name="delete-duplicates" value="true"/>
+                <param name="deduplication" value="both"/>
+            </params>
+            <savers>
+                <results-saver class="cdc.impl.resultsavers.CSVFileSaver">
+                    <params>
+                        <param name="encoding" value="UTF-8"/>
+                        <param name="output-file" value="/Users/sharon/Desktop/test.csv"/>
+                    </params>
+                </results-saver>
+            </savers>
+        </results-saver>
+    </results-savers>
+</configuration>
